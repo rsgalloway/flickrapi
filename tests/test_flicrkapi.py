@@ -27,6 +27,36 @@ key = '123key'
 secret = '42'
 f = flickrapi.FlickrAPI(key, secret)
 
+class FlickrApiTest(unittest.TestCase):
+    
+    def test_repr(self):
+        r = repr(f)
+        self.assertTrue('FlickrAPI' in r)
+        self.assertTrue(key in r)
+
+    def test_get_auth_url(self):
+        '''Test the authentication URL generation'''
+        
+        args = dict(api_key=key, frob='frob', perms='read')
+        args['api_sig'] = f.sign(args)
+        
+        url = f.auth_url(args['perms'], args['frob'])
+        
+        # Test the URL part by part
+        (urltype, rest) = urllib.splittype(url)
+        self.assertEqual('http', urltype)
+        
+        (hostport, path) = urllib.splithost(rest)
+        self.assertEqual(flickrapi.FlickrAPI.flickr_host, hostport)
+        
+        (path, query) = urllib.splitquery(path)
+        self.assertEqual(flickrapi.FlickrAPI.flickr_auth_form, path)
+        
+        attrvalues = query.split('&')
+        attribs = dict(av.split('=') for av in attrvalues)
+        self.assertEqual(args, attribs)
+        
+        
 class SigningTest(unittest.TestCase):
     '''Tests the signing of different arguments.'''
 
@@ -185,6 +215,27 @@ class DynamicMethodTest(unittest.TestCase):
                         ])
         self.assertEquals(expected, sent)
 
+    def test_private_attribute(self):
+        '''Tests that we get an AttributeError when accessing an attribute
+        starting with __.
+        '''
+        
+        self.assertRaises(AttributeError, f, '__get_photos')
+
+    def test_get_dynamic_method(self):
+        
+        method = f.photos_setMeta
+        self.assertTrue(callable(method))
+        self.assertEquals('flickr.photos.setMeta', method.method)
+
+        # Test that we can get it again - should come from the cache,
+        # but no way to test that.        
+        method = f.photos_setMeta
+        self.assertTrue(callable(method))
+        self.assertEquals('flickr.photos.setMeta', method.method)
+        
+        
+        
 class ClassMethodTest(unittest.TestCase):
 
     fail_rsp = flickrapi.XMLNode.parse(
