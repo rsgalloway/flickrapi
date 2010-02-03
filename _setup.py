@@ -49,7 +49,7 @@ data = {
     'author_email': 'beej@beej.us', 
     'maintainer': 'Sybren A. Stuvel',
     'maintainer_email': 'sybren@stuvel.eu',
-    'ur': 'http://stuvel.eu/projects/flickrapi',
+    'url': 'http://stuvel.eu/projects/flickrapi',
     'description': 'The official Python interface to the Flickr API', 
     'long_description': 'The easiest to use, most complete, and '
         'most actively developed Python interface to the Flickr API.'
@@ -57,7 +57,7 @@ data = {
         'access, uploading and replacing photos, and all Flickr API '
         'functions.', 
     'packages': ['flickrapi'],
-    'data_files': [],
+    'data_files': ['LICENSE', 'README', 'UPGRADING'],
     'license': 'Python',
     'classifiers': [
         'Development Status :: 6 - Mature',
@@ -71,7 +71,9 @@ data = {
     'extras_require': {
         'ElementTree':  ["elementtree>=1.2.6"],
     },
-    'distclass': OurDistribution
+    'distclass': OurDistribution,
+    'zip_safe': True,
+    'test_suite': 'tests',
 }
 
 (major, minor) = sys.version_info[:2]

@@ -11,7 +11,7 @@ See `the FlickrAPI homepage`_ for more info.
 .. _`the FlickrAPI homepage`: http://stuvel.eu/projects/flickrapi
 '''
 
-__version__ = '1.3'
+__version__ = '1.4-beta0'
 __all__ = ('FlickrAPI', 'IllegalArgumentException', 'FlickrError',
         'CancelUpload', 'XMLNode', 'set_log_level', '__version__')
 __author__ = u'Sybren St\u00fcvel'.encode('utf-8')
@@ -47,7 +47,6 @@ __author__ = u'Sybren St\u00fcvel'.encode('utf-8')
 import sys
 import urllib
 import urllib2
-import mimetools
 import os.path
 import logging
 import copy
@@ -399,8 +398,8 @@ class FlickrAPI(object):
         if self.cache and self.cache.get(post_data):
             return self.cache.get(post_data)
 
-        url = "http://" + FlickrAPI.flickr_host + FlickrAPI.flickr_rest_form
-        flicksocket = urllib.urlopen(url, post_data)
+        url = "http://" + self.flickr_host + self.flickr_rest_form
+        flicksocket = urllib2.urlopen(url, post_data)
         reply = flicksocket.read()
         flicksocket.close()
 
@@ -453,8 +452,8 @@ class FlickrAPI(object):
                     "frob": frob,
                     "perms": perms})
 
-        return "http://%s%s?%s" % (FlickrAPI.flickr_host, \
-            FlickrAPI.flickr_auth_form, encoded)
+        return "http://%s%s?%s" % (self.flickr_host, \
+                self.flickr_auth_form, encoded)
 
     def web_login_url(self, perms):
         '''Returns the web login URL to forward web users to.
@@ -467,8 +466,8 @@ class FlickrAPI(object):
                     "api_key": self.api_key,
                     "perms": perms})
 
-        return "http://%s%s?%s" % (FlickrAPI.flickr_host, \
-            FlickrAPI.flickr_auth_form, encoded)
+        return "http://%s%s?%s" % (self.flickr_host, \
+                self.flickr_auth_form, encoded)
 
     def __extract_upload_response_format(self, kwargs):
         '''Returns the response format given in kwargs['format'], or
@@ -535,7 +534,7 @@ class FlickrAPI(object):
         that's true only when the upload is done.
         """
 
-        return self.__upload_to_form(FlickrAPI.flickr_upload_form,
+        return self.__upload_to_form(self.flickr_upload_form,
                 filename, callback, **kwargs)
     
     def replace(self, filename, photo_id, callback=None, **kwargs):
@@ -562,7 +561,7 @@ class FlickrAPI(object):
             raise IllegalArgumentException("photo_id must be specified")
 
         kwargs['photo_id'] = photo_id
-        return self.__upload_to_form( FlickrAPI.flickr_replace_form,
+        return self.__upload_to_form(self.flickr_replace_form,
                 filename, callback, **kwargs)
         
     def __upload_to_form(self, form_url, filename, callback, **kwargs):
@@ -591,7 +590,7 @@ class FlickrAPI(object):
         
         if self.secret:
             kwargs["api_sig"] = self.sign(kwargs)
-        url = "http://%s%s" % (FlickrAPI.flickr_host, form_url)
+        url = "http://%s%s" % (self.flickr_host, form_url)
 
         # construct POST data
         body = Multipart()
@@ -646,7 +645,14 @@ class FlickrAPI(object):
         '''
         
         auth_url = self.auth_url(perms, frob)
-        webbrowser.open(auth_url, True, True)
+        try:
+            browser = webbrowser.get()
+        except webbrowser.Error:
+            if 'BROWSER' not in os.environ:
+                raise
+            browser = webbrowser.GenericBrowser(os.environ['BROWSER'])
+
+        browser.open(auth_url, True, True)
         
     def get_token_part_one(self, perms="read", auth_callback=None):
         """Get a token either from the cache, or make a new one from
@@ -704,7 +710,9 @@ class FlickrAPI(object):
             if hasattr(auth_callback, '__call__'):
                 # use the provided callback function
                 authenticate = auth_callback
-            elif auth_callback is not False:
+            elif auth_callback is False:
+                authenticate = None
+            else:
                 # Any non-callable non-False value is invalid
                 raise ValueError('Invalid value for auth_callback: %s'
                         % auth_callback)
@@ -731,6 +739,11 @@ class FlickrAPI(object):
 
         # get a new token if we need one
         if not token:
+            # If we can't authenticate, it's all over.
+            if not authenticate:
+                raise FlickrError('Authentication required but '
+                        'blocked using auth_callback=False')
+
             # get the frob
             LOG.debug("Getting frob for new token")
             rsp = self.auth_getFrob(auth_token=None, format='xmlnode')
