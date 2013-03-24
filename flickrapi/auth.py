@@ -11,7 +11,7 @@ import webbrowser
 import six
 
 import requests
-from requests.auth import OAuth1
+from requests_oauthlib import OAuth1
 
 from . import sockutil, exceptions, html
 from .exceptions import FlickrError
@@ -134,7 +134,7 @@ class OAuthFlickrInterface(object):
         assert isinstance(api_key, six.text_type), 'api_key must be unicode string'
         assert isinstance(api_secret, six.text_type), 'api_secret must be unicode string'
 
-        self.oauth = OAuth1(api_key, api_secret, signature_type='auth_header')
+        self.oauth = OAuth1(unicode(api_key), unicode(api_secret), signature_type='auth_header')
         self.oauth_token = None
         self.auth_http_server = None
         self.requested_permissions = None
@@ -232,9 +232,13 @@ class OAuthFlickrInterface(object):
         
         @return: the response content
         '''
-
+        # support for image urls
+        if filename.startswith("http://"):
+            data = requests.get(filename).content
+        else:
+            data = open(filename, 'rb')
         req = requests.post(url, data=params, auth=self.oauth,
-                            files={'photo': open(filename, 'rb')})
+                            files={'photo': data})
         
         # check the response headers / status code.
         if req.status_code != 200:

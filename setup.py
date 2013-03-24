@@ -50,7 +50,8 @@ data = {
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     'install_requires': [
-        'requests==0.14.1', # 0.14.2 has a bug and won't install on Python 3.2
+        'requests>=0.14.1', # 0.14.2 has a bug and won't install on Python 3.2
+        'requests-oathlib',
         'six>=1.2.0'
     ],
     'extras_require': {

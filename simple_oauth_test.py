@@ -1,12 +1,14 @@
 import sys
 import requests
-from requests.auth import OAuth1
+from requests_oauthlib import OAuth1
 import urllib
 
 url = "http://www.flickr.com/services/oauth/request_token"
 
-queryoauth = OAuth1(u'a233c66549c9fb5e40a68c1ae156b370', u'03fbb3ea705fe096',
-                    signature_type='query')
+key = "a233c66549c9fb5e40a68c1ae156b370"
+secret = "03fbb3ea705fe096"
+
+queryoauth = OAuth1(key, secret, signature_type='query')
 
 params = {
     'oauth_callback': 'http://localhost:8080/'
@@ -15,7 +17,7 @@ params = {
 r = requests.get(url,
                  auth=queryoauth,
                  params=params,
-                 config={'verbose': sys.stderr})
+                 )
 
 assert isinstance(r, requests.Response)
 
