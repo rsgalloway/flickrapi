@@ -56,7 +56,11 @@ class FilePart(Part):
     def __init__(self, parameters, filename, content_type):
         parameters['filename'] = filename
         
-        imagefile = open(filename, 'rb')
+        if filename.startswith("http://"):
+            import urllib2
+            imagefile = urllib2.urlopen(filename)
+        else:
+            imagefile = open(filename, 'rb')
         payload = imagefile.read()
         imagefile.close()
 
