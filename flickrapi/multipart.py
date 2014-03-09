@@ -43,6 +43,26 @@ class Part(object):
         
         return lines
 
+class HttpPart(Part):
+    '''A single part with an image url as the payload
+    
+    This example has the same semantics as the second Part example:
+
+    >>> url = "http://www.fnordware.com/superpng/pnggrad16rgb.png"
+    >>> HttpPart({'name': 'photo'}, url, 'image/png')
+    ... #doctest: +ELLIPSIS
+    <flickrapi.multipart.HttpPart object at 0x...>
+    '''
+    
+    def __init__(self, parameters, url, content_type):
+        import urllib2
+
+        parameters['url'] = url
+        
+        payload = urllib2.urlopen(url).read()
+
+        Part.__init__(self, parameters, payload, content_type)
+
 class FilePart(Part):
     '''A single part with a file as the payload
     
@@ -61,6 +81,22 @@ class FilePart(Part):
         imagefile.close()
 
         Part.__init__(self, parameters, payload, content_type)
+
+class DataPart(Part):
+    '''A single part with image data as payload
+    
+    This example has the same semantics as the second Part example:
+
+    >>> import urllib2
+    >>> url = "http://www.fnordware.com/superpng/pnggrad16rgb.png"
+    >>> data = urllib2.urlopen(url).read()
+    >>> DataPart({'name': 'photo'}, data, 'image/jpeg')
+    ... #doctest: +ELLIPSIS
+    <flickrapi.multipart.DataPart object at 0x...>
+    '''
+    
+    def __init__(self, parameters, data, content_type):
+        Part.__init__(self, parameters, data, content_type)
 
 def boundary():
     """Generate a random boundary, a bit like Python 2.5's uuid module."""

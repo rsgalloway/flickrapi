@@ -41,6 +41,18 @@ class PartTest(unittest.TestCase):
         ]
         self.assertEquals(expect, p.render())
 
+    def testHttp(self):
+        test_url = "http://www.fnordware.com/superpng/pnggrad16rgb.png"
+        p = multipart.HttpPart({'name': 'httptest'}, test_url, "image/png")
+        result = p.render()
+
+    def testData(self):
+        import urllib2
+        test_url = "http://www.fnordware.com/superpng/pnggrad16rgb.png"
+        data = urllib2.urlopen(test_url).read()
+        p = multipart.DataPart({'name': 'httptest'}, data, "image/png")
+        result = p.render()
+
     def testFile(self):
         testfile_name = "testfile"
         testfile_payload = "This is a file"
