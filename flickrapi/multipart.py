@@ -57,7 +57,7 @@ class HttpPart(Part):
     def __init__(self, parameters, url, content_type):
         import urllib2
 
-        parameters['url'] = url
+        parameters['filename'] = url
         
         payload = urllib2.urlopen(url).read()
 
@@ -96,6 +96,7 @@ class DataPart(Part):
     '''
     
     def __init__(self, parameters, data, content_type):
+        parameters['filename'] = "data.jpg"
         Part.__init__(self, parameters, data, content_type)
 
 def boundary():

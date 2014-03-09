@@ -59,7 +59,7 @@ except ImportError: from md5 import md5
 from flickrapi.tokencache import TokenCache, SimpleTokenCache, \
         LockingTokenCache
 from flickrapi.xmlnode import XMLNode
-from flickrapi.multipart import Part, Multipart, FilePart
+from flickrapi.multipart import Part, Multipart, FilePart, HttpPart, DataPart
 from flickrapi.exceptions import *
 from flickrapi.cache import SimpleCache
 from flickrapi import reportinghttp
@@ -599,8 +599,15 @@ class FlickrAPI(object):
             part = Part({'name': arg}, value)
             body.attach(part)
 
-        filepart = FilePart({'name': 'photo'}, filename, 'image/jpeg')
-        body.attach(filepart)
+        if os.path.isfile(filename):
+            klass = FilePart
+        elif filename.startswith("http://") or filename.startswith("https://"):
+            klass = HttpPart
+        else:
+            klass = DataPart
+        
+        part = klass({'name': 'photo'}, filename, 'image/jpeg')
+        body.attach(part)
 
         return self.__wrap_in_parser(self.__send_multipart, format,
                 url, body, callback)
