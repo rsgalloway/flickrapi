@@ -491,7 +491,7 @@ class FlickrAPI(object):
 
         return format
 
-    def upload(self, filename, callback=None, **kwargs):
+    def upload(self, filename, callback=None, source="file", **kwargs):
         """Upload a file to flickr.
 
         Be extra careful you spell the parameters correctly, or you will
@@ -503,6 +503,8 @@ class FlickrAPI(object):
             name of a file to upload
         callback
             method that gets progress reports
+        source
+            one of file, http or data (defaults to file)
         title
             title of the photo
         description
@@ -535,9 +537,9 @@ class FlickrAPI(object):
         """
 
         return self.__upload_to_form(self.flickr_upload_form,
-                filename, callback, **kwargs)
+                filename, callback, source, **kwargs)
     
-    def replace(self, filename, photo_id, callback=None, **kwargs):
+    def replace(self, filename, photo_id, callback=None, source="file", **kwargs):
         """Replace an existing photo.
 
         Supported parameters:
@@ -562,9 +564,9 @@ class FlickrAPI(object):
 
         kwargs['photo_id'] = photo_id
         return self.__upload_to_form(self.flickr_replace_form,
-                filename, callback, **kwargs)
+                filename, callback, source, **kwargs)
         
-    def __upload_to_form(self, form_url, filename, callback, **kwargs):
+    def __upload_to_form(self, form_url, filename, callback, source="file", **kwargs):
         '''Uploads a photo - can be used to either upload a new photo
         or replace an existing one.
 
@@ -599,12 +601,12 @@ class FlickrAPI(object):
             part = Part({'name': arg}, value)
             body.attach(part)
 
-        if os.path.isfile(filename):
-            klass = FilePart
-        elif filename.startswith("http://") or filename.startswith("https://"):
-            klass = HttpPart
-        else:
+        if source=="data":
             klass = DataPart
+        elif source=="http" and (filename.startswith("http://") or filename.startswith("https://")):
+            klass = HttpPart
+        elif source=="file" and os.path.isfile(filename):
+            klass = FilePart
         
         part = klass({'name': 'photo'}, filename, 'image/jpeg')
         body.attach(part)
